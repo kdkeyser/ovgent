@@ -16,15 +16,14 @@ fun buildHexFeature(result: HexResult, boundary: List<LatLng>): String {
                 add(buildJsonArray {
                     closed.forEach { pt ->
                         add(buildJsonArray {
-                            add(pt.lng.roundTo(6))
-                            add(pt.lat.roundTo(6))
+                            add(pt.lng.roundTo(4))
+                            add(pt.lat.roundTo(4))
                         })
                     }
                 })
             })
         })
         put("properties", buildJsonObject {
-            put("h3index", result.h3Index)
             for (mode in FilterMode.entries) {
                 for (scope in DayScope.entries) {
                     val r = result.byMode[mode]?.get(scope)
@@ -47,8 +46,8 @@ fun buildStopFeature(
         put("geometry", buildJsonObject {
             put("type", "Point")
             put("coordinates", buildJsonArray {
-                add(stop.lon.roundTo(6))
-                add(stop.lat.roundTo(6))
+                add(stop.lon.roundTo(4))
+                add(stop.lat.roundTo(4))
             })
         })
         put("properties", buildJsonObject {

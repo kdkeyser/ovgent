@@ -1,5 +1,5 @@
 import type maplibregl from 'maplibre-gl'
-import type { FilterMode } from './types'
+import type { FilterMode, DayScope } from './types'
 
 export const LEGEND_ENTRIES = [
   { label: '0–5 min', color: '#22c55e' },
@@ -10,8 +10,8 @@ export const LEGEND_ENTRIES = [
   { label: 'No stop', color: '#475569' },
 ]
 
-export function colorExpression(mode: FilterMode): maplibregl.ExpressionSpecification {
-  const prop = `walking_minutes_${mode}`
+export function colorExpression(mode: FilterMode, scope: DayScope): maplibregl.ExpressionSpecification {
+  const prop = `walking_minutes_${mode}_${scope}`
   return [
     'case',
     ['==', ['coalesce', ['get', prop], -1], -1], '#475569',

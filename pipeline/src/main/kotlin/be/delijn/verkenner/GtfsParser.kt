@@ -7,7 +7,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-
 private val DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
 // Bounding box: Ghent area + ~3 km buffer to include stops near the city border
@@ -16,6 +15,17 @@ private const val LAT_MIN = 50.953
 private const val LAT_MAX = 51.197
 private const val LON_MIN = 3.577
 private const val LON_MAX = 3.923
+
+fun parseWeekArg(weekId: String): LocalDate {
+    require(weekId.matches(Regex("\\d{4}-W\\d{2}"))) {
+        "Invalid --week format '$weekId': expected YYYY-Www (e.g. 2026-W23)"
+    }
+    val (yearStr, weekStr) = weekId.split("-W")
+    val year = yearStr.toInt()
+    val week = weekStr.toInt()
+    val jan4 = LocalDate.of(year, 1, 4)
+    return jan4.minusDays((jan4.dayOfWeek.value - 1).toLong()).plusWeeks((week - 1).toLong())
+}
 
 fun parseStops(gtfsDir: String): Map<String, Stop> {
     val format = CSVFormat.RFC4180.builder().setHeader().setSkipHeaderRecord(true).build()
@@ -64,10 +74,9 @@ fun parseDeparturesPerStopPerDay(
     gtfsDir: String,
     ghentStopIds: Set<String>,
     serviceCalendar: Map<String, Set<LocalDate>>,
-    serviceToTrips: Map<String, Set<String>>
+    serviceToTrips: Map<String, Set<String>>,
+    representativeWeek: Map<DayOfWeek, LocalDate>
 ): Map<String, Map<DayOfWeek, List<LocalTime>>> {
-
-    val representativeWeek = findRepresentativeWeek(serviceCalendar)
 
     // date -> Set<trip_id> for the 7 representative dates
     val dateToTripIds: Map<LocalDate, Set<String>> = representativeWeek.values.associateWith { date ->
@@ -114,27 +123,4 @@ private fun parseGtfsTime(s: String): LocalTime? {
     if (parts.size != 3) return null
     if (parts[0] >= 24) return null  // overnight trip from previous day — discard
     return LocalTime.of(parts[0], parts[1], parts[2])
-}
-
-private fun findRepresentativeWeek(serviceCalendar: Map<String, Set<LocalDate>>): Map<DayOfWeek, LocalDate> {
-    val allDates = serviceCalendar.values.flatten().toSortedSet()
-    val midDate = allDates.toList()[allDates.size / 2]
-
-    fun searchFrom(start: LocalDate, forward: Boolean): Map<DayOfWeek, LocalDate>? {
-        var monday = start
-        while (monday.dayOfWeek != DayOfWeek.MONDAY) monday = monday.minusDays(1)
-        repeat(52) {
-            val week = (0L..6L).map { monday.plusDays(it) }
-            if (week.all { it in allDates }) {
-                println("  Representative week: $monday .. ${monday.plusDays(6)}")
-                return DayOfWeek.entries.associateWith { dow -> week[dow.value - 1] }
-            }
-            monday = if (forward) monday.plusWeeks(1) else monday.minusWeeks(1)
-        }
-        return null
-    }
-
-    return searchFrom(midDate, forward = true)
-        ?: searchFrom(midDate, forward = false)
-        ?: error("Could not find a complete representative week in GTFS data")
 }

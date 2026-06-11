@@ -23,6 +23,26 @@ fun buildGhentH3Grid(): List<HexCell> {
 
 fun hexBoundary(index: String): List<LatLng> = h3.cellToBoundary(index)
 
+fun loadGhentBoundaryRing(): List<LatLng> {
+    val json = object {}.javaClass.getResourceAsStream("/ghent-boundary.geojson")!!
+        .bufferedReader().readText()
+    return extractBoundaryRings(json).outer
+}
+
+fun isInsidePolygon(lat: Double, lon: Double, ring: List<LatLng>): Boolean {
+    var inside = false
+    var j = ring.size - 1
+    for (i in ring.indices) {
+        val xi = ring[i].lng; val yi = ring[i].lat
+        val xj = ring[j].lng; val yj = ring[j].lat
+        if ((yi > lat) != (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) {
+            inside = !inside
+        }
+        j = i
+    }
+    return inside
+}
+
 private data class BoundaryRings(val outer: List<LatLng>, val holes: List<List<LatLng>>)
 
 private fun extractBoundaryRings(geojson: String): BoundaryRings {

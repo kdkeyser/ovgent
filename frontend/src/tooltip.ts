@@ -1,5 +1,5 @@
 import type maplibregl from 'maplibre-gl'
-import type { HexProperties, StopProperties, FilterMode } from './types'
+import type { HexProperties, StopProperties, FilterMode, DayScope } from './types'
 
 const DAY_LABELS: Record<string, string> = {
   MONDAY: 'Mon', TUESDAY: 'Tue', WEDNESDAY: 'Wed', THURSDAY: 'Thu',
@@ -8,7 +8,11 @@ const DAY_LABELS: Record<string, string> = {
 
 const DAY_ORDER = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
-export function initTooltip(map: maplibregl.Map, getMode: () => FilterMode): void {
+export function initTooltip(
+  map: maplibregl.Map,
+  getMode: () => FilterMode,
+  getScope: () => DayScope
+): void {
   const el = document.getElementById('tooltip') as HTMLElement
 
   function show(e: maplibregl.MapMouseEvent, html: string) {
@@ -26,8 +30,9 @@ export function initTooltip(map: maplibregl.Map, getMode: () => FilterMode): voi
     if (!e.features?.length) return
     const props = e.features[0].properties as HexProperties
     const mode = getMode()
-    const minutes = props[`walking_minutes_${mode}` as keyof HexProperties] as number | null
-    const stopName = props[`nearest_stop_${mode}` as keyof HexProperties] as string | null
+    const scope = getScope()
+    const minutes = props[`walking_minutes_${mode}_${scope}` as keyof HexProperties] as number | null
+    const stopName = props[`nearest_stop_${mode}_${scope}` as keyof HexProperties] as string | null
 
     const hasData = minutes !== null && minutes !== ('null' as unknown)
     show(e, hasData
