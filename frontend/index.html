@@ -7,19 +7,58 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body, #map { width: 100%; height: 100%; }
+
     #controls {
       position: absolute; top: 12px; left: 12px; z-index: 10;
       background: rgba(15,23,42,0.92); color: #f1f5f9;
-      border-radius: 8px; padding: 12px 16px;
+      border-radius: 8px;
       font-family: system-ui, sans-serif; font-size: 14px;
       min-width: 230px;
     }
+
+    #controls-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      cursor: pointer;
+      user-select: none;
+      gap: 8px;
+    }
+    #controls-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+      color: #94a3b8; text-transform: uppercase; flex: 1;
+    }
+    #controls-chevron {
+      background: none; border: none; color: #64748b;
+      cursor: pointer; padding: 2px 2px; line-height: 1;
+      font-size: 10px; flex-shrink: 0;
+      transition: transform 0.25s ease;
+    }
+    #controls.collapsed #controls-chevron { transform: rotate(180deg); }
+
+    #controls-body {
+      overflow: hidden;
+      max-height: 600px;
+      transition: max-height 0.3s ease, opacity 0.2s ease;
+      opacity: 1;
+      padding: 0 14px 14px;
+      border-top: 1px solid #1e293b;
+    }
+    #controls.collapsed #controls-body {
+      max-height: 0;
+      opacity: 0;
+      padding-bottom: 0;
+      border-top-color: transparent;
+    }
+
     .ctrl-label {
-      display: block; margin-bottom: 6px;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+      display: block; margin-bottom: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
       color: #94a3b8; text-transform: uppercase;
     }
-    .ctrl-section { margin-bottom: 12px; }
+    .ctrl-section { margin-top: 10px; }
+
     select {
       width: 100%; background: #1e293b; color: #f1f5f9;
       border: 1px solid #334155; border-radius: 4px;
@@ -46,7 +85,8 @@
       padding: 6px 10px; font-size: 13px; cursor: pointer; flex-shrink: 0;
     }
     .nav-btn:disabled { opacity: 0.35; cursor: default; }
-    #legend { margin-top: 12px; border-top: 1px solid #334155; padding-top: 10px; }
+    #legend { margin-top: 10px; border-top: 1px solid #334155; padding-top: 10px; }
+
     #tooltip {
       position: absolute; z-index: 20; pointer-events: none;
       background: rgba(15,23,42,0.95); color: #f1f5f9;
@@ -54,42 +94,103 @@
       font-family: system-ui, sans-serif; font-size: 13px;
       display: none;
     }
+
+    /* ── Mobile: bottom sheet ─────────────────────────── */
+    @media (max-width: 600px) {
+      #controls {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        min-width: unset;
+        border-radius: 14px 14px 0 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      #controls-header {
+        flex-direction: column;
+        align-items: center;
+        padding: 10px 16px 10px;
+        gap: 6px;
+      }
+      /* drag handle pill */
+      #controls-header::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: #334155;
+        border-radius: 2px;
+      }
+      #controls-chevron { display: none; }
+      #controls-body {
+        padding: 0 16px 20px;
+        max-height: 75vh;
+        overflow-y: auto;
+      }
+      #controls.collapsed #controls-body {
+        max-height: 0;
+        padding-bottom: 0;
+      }
+      #tooltip { display: none !important; }
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
   <div id="controls">
-    <div class="ctrl-section">
-      <span class="ctrl-label">Service level</span>
-      <select id="mode-select">
-        <option value="min1">1 bus/tram per day</option>
-        <option value="min10">10 buses/trams per day</option>
-        <option value="hourly">1 bus/tram per hour</option>
-        <option value="halfhour">1 bus/tram per half hour</option>
-      </select>
+    <div id="controls-header">
+      <span id="controls-title">Settings</span>
+      <button id="controls-chevron" aria-label="Toggle controls">▲</button>
     </div>
-    <div class="ctrl-section">
-      <span class="ctrl-label">Day coverage</span>
-      <div class="scope-btns">
-        <button class="scope-btn active" data-scope="weekday">Weekdays</button>
-        <button class="scope-btn" data-scope="fullweek">Full week</button>
+    <div id="controls-body">
+      <div class="ctrl-section">
+        <span class="ctrl-label">Service level</span>
+        <select id="mode-select">
+          <option value="min1">1 bus/tram per day</option>
+          <option value="min10">10 buses/trams per day</option>
+          <option value="hourly">1 bus/tram per hour</option>
+          <option value="halfhour">1 bus/tram per half hour</option>
+        </select>
       </div>
-    </div>
-    <div class="ctrl-section">
-      <span class="ctrl-label">Week</span>
-      <div class="week-row">
-        <button class="nav-btn" id="week-prev">◀</button>
-        <select id="week-select"></select>
-        <button class="nav-btn" id="week-next">▶</button>
+      <div class="ctrl-section">
+        <span class="ctrl-label">Day coverage</span>
+        <div class="scope-btns">
+          <button class="scope-btn active" data-scope="weekday">Weekdays</button>
+          <button class="scope-btn" data-scope="fullweek">Full week</button>
+        </div>
       </div>
+      <div class="ctrl-section">
+        <span class="ctrl-label">Week</span>
+        <div class="week-row">
+          <button class="nav-btn" id="week-prev">◀</button>
+          <select id="week-select"></select>
+          <button class="nav-btn" id="week-next">▶</button>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <span class="ctrl-label">Stops</span>
+        <button class="toggle-btn active" id="stops-toggle">Stops on</button>
+      </div>
+      <div id="legend"></div>
     </div>
-    <div class="ctrl-section">
-      <span class="ctrl-label">Stops</span>
-      <button class="toggle-btn active" id="stops-toggle">Stops on</button>
-    </div>
-    <div id="legend"></div>
   </div>
+
   <div id="tooltip"></div>
+
+  <script>
+    const controlsEl = document.getElementById('controls');
+    document.getElementById('controls-header').addEventListener('click', () => {
+      controlsEl.classList.toggle('collapsed');
+    });
+    // prevent tapping controls inside the body from collapsing the panel
+    document.getElementById('controls-body').addEventListener('click', e => e.stopPropagation());
+    // start collapsed on mobile
+    if (window.matchMedia('(max-width: 600px)').matches) {
+      controlsEl.classList.add('collapsed');
+    }
+  </script>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
