@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algorithm Comparison – Local vs gent.kenas.be</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #map { width: 100%; height: 100%; }
+
+    #controls {
+      position: absolute; top: 12px; left: 12px; z-index: 10;
+      background: rgba(15,23,42,0.92); color: #f1f5f9;
+      border-radius: 8px; padding: 14px;
+      font-family: system-ui, sans-serif; font-size: 14px;
+      min-width: 240px;
+    }
+    h1 {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+      color: #94a3b8; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .ctrl-label {
+      display: block; margin-bottom: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+      color: #94a3b8; text-transform: uppercase;
+    }
+    .ctrl-section { margin-top: 10px; }
+    select {
+      width: 100%; background: #1e293b; color: #f1f5f9;
+      border: 1px solid #334155; border-radius: 4px;
+      padding: 6px 8px; font-size: 13px;
+    }
+    .scope-btns { display: flex; gap: 4px; }
+    .scope-btn {
+      flex: 1; background: #1e293b; color: #94a3b8;
+      border: 1px solid #334155; border-radius: 4px;
+      padding: 6px 0; font-size: 13px; cursor: pointer;
+    }
+    .scope-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    #legend {
+      margin-top: 12px; border-top: 1px solid #334155; padding-top: 10px;
+      font-size: 12px;
+    }
+    .legend-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+    #status {
+      margin-top: 10px; font-size: 11px; color: #64748b; min-height: 14px;
+    }
+    #tooltip {
+      position: absolute; z-index: 20; pointer-events: none;
+      background: rgba(15,23,42,0.95); color: #f1f5f9;
+      padding: 8px 12px; border-radius: 6px;
+      font-family: system-ui, sans-serif; font-size: 13px;
+      display: none; line-height: 1.6;
+    }
+    #back-link {
+      position: absolute; top: 12px; right: 12px; z-index: 10;
+      background: rgba(15,23,42,0.92); color: #94a3b8;
+      border-radius: 6px; padding: 8px 12px;
+      font-family: system-ui, sans-serif; font-size: 12px;
+      text-decoration: none;
+    }
+    #back-link:hover { color: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="controls">
+    <h1>Algorithm diff – local vs kenas.be</h1>
+
+    <div class="ctrl-section">
+      <span class="ctrl-label">Week</span>
+      <select id="week-select"></select>
+    </div>
+
+    <div class="ctrl-section">
+      <span class="ctrl-label">Service level</span>
+      <select id="mode-select">
+        <option value="min1">1 bus/tram per day</option>
+        <option value="min10">10 buses/trams per day</option>
+        <option value="hourly">1 bus/tram per hour</option>
+        <option value="halfhour">1 bus/tram per half hour</option>
+      </select>
+    </div>
+
+    <div class="ctrl-section">
+      <span class="ctrl-label">Day coverage</span>
+      <div class="scope-btns">
+        <button class="scope-btn active" data-scope="weekday">Weekdays</button>
+        <button class="scope-btn" data-scope="fullweek">Full week</button>
+      </div>
+    </div>
+
+    <div id="legend">
+      <div class="legend-row"><div class="legend-swatch" style="background:#1d4ed8"></div> Local &gt;5 min faster</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#93c5fd"></div> Local 1–5 min faster</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#e2e8f0"></div> Within 1 min (same)</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#fca5a5"></div> Local 1–5 min slower</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#dc2626"></div> Local &gt;5 min slower</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#22c55e"></div> Local has data, remote null</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#a855f7"></div> Remote has data, local null</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#475569"></div> Both null</div>
+    </div>
+
+    <div id="status">Loading…</div>
+  </div>
+
+  <div id="tooltip"></div>
+  <a href="/" id="back-link">← Back to map</a>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script>
+    const REMOTE = 'https://gent.kenas.be'
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/positron',
+      center: [3.722, 51.054],
+      zoom: 12,
+    })
+
+    const statusEl = document.getElementById('status')
+    const tooltipEl = document.getElementById('tooltip')
+    const weekSelect = document.getElementById('week-select')
+    const modeSelect = document.getElementById('mode-select')
+
+    let currentWeek = null
+    let currentMode = 'min1'
+    let currentScope = 'weekday'
+    let diffData = null   // merged GeoJSON with delta properties
+
+    // ── Scope buttons ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.scope-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        currentScope = btn.dataset.scope
+        updateLayer()
+      })
+    })
+
+    modeSelect.addEventListener('change', () => {
+      currentMode = modeSelect.value
+      updateLayer()
+    })
+
+    weekSelect.addEventListener('change', () => {
+      currentWeek = weekSelect.value
+      loadWeek(currentWeek)
+    })
+
+    // ── Boot: load manifest ───────────────────────────────────────────────────
+    fetch('/weeks-manifest.json')
+      .then(r => r.json())
+      .then(manifest => {
+        manifest.weeks.forEach(w => {
+          const opt = document.createElement('option')
+          opt.value = w.id
+          opt.textContent = w.label
+          weekSelect.appendChild(opt)
+        })
+        currentWeek = manifest.weeks[0].id
+        map.on('load', () => loadWeek(currentWeek))
+      })
+
+    // ── Load + merge week data ────────────────────────────────────────────────
+    async function loadWeek(weekId) {
+      statusEl.textContent = 'Fetching local + remote data…'
+      try {
+        const [local, remote] = await Promise.all([
+          fetch(`/ghent-hexes-${weekId}.geojson`).then(r => r.json()),
+          fetch(`${REMOTE}/ghent-hexes-${weekId}.geojson`).then(r => r.json()),
+        ])
+
+        // Index remote features by h3 index (first coordinate set as key via geometry hash,
+        // but both datasets share the same hexes so we can zip by position if order matches,
+        // or build an index by the first coordinate as a reliable key).
+        // Both pipelines start from the same H3 grid, so h3_index is in properties if present,
+        // otherwise fall back to position-based matching after sorting by centroid.
+        const remoteIndex = new Map()
+        for (const f of remote.features) {
+          const key = hexKey(f)
+          remoteIndex.set(key, f)
+        }
+
+        // Build merged GeoJSON — keep local geometry, attach remote props
+        const merged = {
+          type: 'FeatureCollection',
+          features: local.features.map(localF => {
+            const key = hexKey(localF)
+            const remoteF = remoteIndex.get(key)
+            const props = {}
+            for (const [k, v] of Object.entries(localF.properties)) {
+              props['local_' + k] = v
+            }
+            if (remoteF) {
+              for (const [k, v] of Object.entries(remoteF.properties)) {
+                props['remote_' + k] = v
+              }
+            }
+            return { type: 'Feature', geometry: localF.geometry, properties: props }
+          })
+        }
+
+        diffData = merged
+        upsertSource(merged)
+        updateLayer()
+
+        const matched = local.features.filter(f => remoteIndex.has(hexKey(f))).length
+        statusEl.textContent = `${matched}/${local.features.length} hexes matched`
+      } catch (e) {
+        statusEl.textContent = 'Error: ' + e.message
+        console.error(e)
+      }
+    }
+
+    // Use centroid rounded to 4dp as a stable hex key (same H3 grid → same centres)
+    function hexKey(feature) {
+      const coords = feature.geometry.coordinates[0]
+      const lat = coords.reduce((s, c) => s + c[1], 0) / coords.length
+      const lon = coords.reduce((s, c) => s + c[0], 0) / coords.length
+      return `${lat.toFixed(4)},${lon.toFixed(4)}`
+    }
+
+    function upsertSource(geojson) {
+      if (map.getSource('diff')) {
+        map.getSource('diff').setData(geojson)
+      } else {
+        map.addSource('diff', { type: 'geojson', data: geojson })
+        map.addLayer({
+          id: 'diff-fill',
+          type: 'fill',
+          source: 'diff',
+          paint: {
+            'fill-color': diffColorExpr('min1', 'weekday'),
+            'fill-opacity': 0.75,
+          }
+        })
+        map.addLayer({
+          id: 'diff-outline',
+          type: 'line',
+          source: 'diff',
+          paint: { 'line-color': 'rgba(0,0,0,0.08)', 'line-width': 0.4 }
+        })
+
+        // Tooltip
+        map.on('mousemove', 'diff-fill', e => {
+          if (!e.features?.length) return
+          const p = e.features[0].properties
+          const prop = `walking_minutes_${currentMode}_${currentScope}`
+          const local = p['local_' + prop]
+          const remote = p['remote_' + prop]
+          const localStr = local != null ? Math.round(local * 10) / 10 + ' min' : 'null'
+          const remoteStr = remote != null ? Math.round(remote * 10) / 10 + ' min' : 'null'
+          let deltaStr = '–'
+          if (local != null && remote != null) {
+            const d = Math.round((local - remote) * 10) / 10
+            deltaStr = (d > 0 ? '+' : '') + d + ' min'
+          }
+          tooltipEl.style.display = 'block'
+          tooltipEl.style.left = `${e.point.x + 12}px`
+          tooltipEl.style.top = `${e.point.y + 12}px`
+          tooltipEl.innerHTML =
+            `<strong>Local:</strong> ${localStr}<br>` +
+            `<strong>Remote:</strong> ${remoteStr}<br>` +
+            `<strong>Delta:</strong> ${deltaStr}`
+        })
+        map.on('mouseleave', 'diff-fill', () => { tooltipEl.style.display = 'none' })
+        map.on('mouseenter', 'diff-fill', () => { map.getCanvas().style.cursor = 'crosshair' })
+        map.on('mouseleave', 'diff-fill', () => { map.getCanvas().style.cursor = '' })
+      }
+    }
+
+    function updateLayer() {
+      if (!map.getLayer('diff-fill')) return
+      map.setPaintProperty('diff-fill', 'fill-color', diffColorExpr(currentMode, currentScope))
+    }
+
+    function diffColorExpr(mode, scope) {
+      const prop = `walking_minutes_${mode}_${scope}`
+      const lp = ['get', 'local_' + prop]
+      const rp = ['get', 'remote_' + prop]
+      const lNull = ['==', ['coalesce', lp, null], null]
+      const rNull = ['==', ['coalesce', rp, null], null]
+      const delta = ['-', lp, rp]
+      return [
+        'case',
+        // both null
+        ['all', lNull, rNull], '#475569',
+        // only local has data
+        ['all', ['!', lNull], rNull], '#22c55e',
+        // only remote has data
+        ['all', lNull, ['!', rNull]], '#a855f7',
+        // both have data → colour by delta (local - remote)
+        // negative = local faster (blue), positive = local slower (red)
+        ['<=', delta, -5], '#1d4ed8',
+        ['<=', delta, -1], '#93c5fd',
+        ['<=', delta,  1], '#e2e8f0',
+        ['<=', delta,  5], '#fca5a5',
+        '#dc2626'
+      ]
+    }
+  </script>
+</body>
+</html>

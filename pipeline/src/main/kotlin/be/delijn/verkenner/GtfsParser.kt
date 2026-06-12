@@ -68,17 +68,29 @@ fun parseTrips(gtfsDir: String): Map<String, Set<String>> {
     return result
 }
 
-// Returns: stop_id -> DayOfWeek -> List<LocalTime>
-// Uses one representative date per day-of-week from a complete week in the data.
-fun parseDeparturesPerStopPerDay(
-    gtfsDir: String,
-    ghentStopIds: Set<String>,
+// Reads stop_times.txt once. Returns: trip_id -> [(stop_id, departure_time)] for Ghent stops only.
+fun parseStopTimes(gtfsDir: String, ghentStopIds: Set<String>): Map<String, List<Pair<String, LocalTime>>> {
+    val result = mutableMapOf<String, MutableList<Pair<String, LocalTime>>>()
+    val format = CSVFormat.RFC4180.builder().setHeader().setSkipHeaderRecord(true).build()
+    FileReader("$gtfsDir/stop_times.txt").use { reader ->
+        CSVParser(reader, format).forEach { row ->
+            val stopId = row["stop_id"]
+            if (stopId !in ghentStopIds) return@forEach
+            val time = parseGtfsTime(row["departure_time"]) ?: return@forEach
+            result.getOrPut(row["trip_id"]) { mutableListOf() }.add(stopId to time)
+        }
+    }
+    return result
+}
+
+// Returns: stop_id -> DayOfWeek -> List<LocalTime> for one representative week.
+// Uses pre-parsed stop times so stop_times.txt is not re-read per week.
+fun computeDeparturesPerStopPerDay(
+    stopTimesPerTrip: Map<String, List<Pair<String, LocalTime>>>,
     serviceCalendar: Map<String, Set<LocalDate>>,
     serviceToTrips: Map<String, Set<String>>,
     representativeWeek: Map<DayOfWeek, LocalDate>
 ): Map<String, Map<DayOfWeek, List<LocalTime>>> {
-
-    // date -> Set<trip_id> for the 7 representative dates
     val dateToTripIds: Map<LocalDate, Set<String>> = representativeWeek.values.associateWith { date ->
         serviceCalendar
             .filter { (_, dates) -> date in dates }
@@ -86,7 +98,6 @@ fun parseDeparturesPerStopPerDay(
             .flatMapTo(mutableSetOf()) { serviceId -> serviceToTrips[serviceId] ?: emptySet() }
     }
 
-    // trip_id -> Set<DayOfWeek> (all days the trip is active in the representative week)
     val tripToDaysOfWeek: Map<String, Set<DayOfWeek>> = run {
         val tripToDates = mutableMapOf<String, MutableSet<LocalDate>>()
         for ((date, tripIds) in dateToTripIds) {
@@ -98,14 +109,9 @@ fun parseDeparturesPerStopPerDay(
     }
 
     val result = mutableMapOf<String, MutableMap<DayOfWeek, MutableList<LocalTime>>>()
-
-    val format = CSVFormat.RFC4180.builder().setHeader().setSkipHeaderRecord(true).build()
-    FileReader("$gtfsDir/stop_times.txt").use { reader ->
-        CSVParser(reader, format).forEach { row ->
-            val stopId = row["stop_id"]
-            if (stopId !in ghentStopIds) return@forEach
-            val daysOfWeek = tripToDaysOfWeek[row["trip_id"]] ?: return@forEach
-            val time = parseGtfsTime(row["departure_time"]) ?: return@forEach
+    for ((tripId, stopTimes) in stopTimesPerTrip) {
+        val daysOfWeek = tripToDaysOfWeek[tripId] ?: continue
+        for ((stopId, time) in stopTimes) {
             for (dayOfWeek in daysOfWeek) {
                 result
                     .getOrPut(stopId) { mutableMapOf() }

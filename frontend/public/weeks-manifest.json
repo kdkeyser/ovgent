@@ -1,106 +1,112 @@
 {
-    "weeks": [
-        {
-            "id": "2026-W23",
-            "label": "Jun 1 – 7 2026",
-            "startDate": "2026-06-01",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W24",
-            "label": "Jun 8 – 14 2026",
-            "startDate": "2026-06-08",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W25",
-            "label": "Jun 15 – 21 2026",
-            "startDate": "2026-06-15",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W26",
-            "label": "Jun 22 – 28 2026",
-            "startDate": "2026-06-22",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W27",
-            "label": "Jun 29 – Jul 5 2026",
-            "startDate": "2026-06-29",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W28",
-            "label": "Jul 6 – 12 2026",
-            "startDate": "2026-07-06",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W29",
-            "label": "Jul 13 – 19 2026",
-            "startDate": "2026-07-13",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W30",
-            "label": "Jul 20 – 26 2026",
-            "startDate": "2026-07-20",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W31",
-            "label": "Jul 27 – Aug 2 2026",
-            "startDate": "2026-07-27",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W32",
-            "label": "Aug 3 – 9 2026",
-            "startDate": "2026-08-03",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W33",
-            "label": "Aug 10 – 16 2026",
-            "startDate": "2026-08-10",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W34",
-            "label": "Aug 17 – 23 2026",
-            "startDate": "2026-08-17",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W35",
-            "label": "Aug 24 – 30 2026",
-            "startDate": "2026-08-24",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W36",
-            "label": "Aug 31 – Sep 6 2026",
-            "startDate": "2026-08-31",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W37",
-            "label": "Sep 7 – 13 2026",
-            "startDate": "2026-09-07",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W38",
-            "label": "Sep 14 – 20 2026",
-            "startDate": "2026-09-14",
-            "coverageWarning": null
-        },
-        {
-            "id": "2026-W39",
-            "label": "Sep 21 – 27 2026",
-            "startDate": "2026-09-21",
-            "coverageWarning": null
-        }
-    ]
+  "weeks": [
+    {
+      "id": "2026-W22",
+      "label": "May 25 – 31 2026",
+      "startDate": "2026-05-25",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W23",
+      "label": "Jun 1 – 7 2026",
+      "startDate": "2026-06-01",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W24",
+      "label": "Jun 8 – 14 2026",
+      "startDate": "2026-06-08",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W25",
+      "label": "Jun 15 – 21 2026",
+      "startDate": "2026-06-15",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W26",
+      "label": "Jun 22 – 28 2026",
+      "startDate": "2026-06-22",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W27",
+      "label": "Jun 29 – Jul 5 2026",
+      "startDate": "2026-06-29",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W28",
+      "label": "Jul 6 – 12 2026",
+      "startDate": "2026-07-06",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W29",
+      "label": "Jul 13 – 19 2026",
+      "startDate": "2026-07-13",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W30",
+      "label": "Jul 20 – 26 2026",
+      "startDate": "2026-07-20",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W31",
+      "label": "Jul 27 – Aug 2 2026",
+      "startDate": "2026-07-27",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W32",
+      "label": "Aug 3 – 9 2026",
+      "startDate": "2026-08-03",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W33",
+      "label": "Aug 10 – 16 2026",
+      "startDate": "2026-08-10",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W34",
+      "label": "Aug 17 – 23 2026",
+      "startDate": "2026-08-17",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W35",
+      "label": "Aug 24 – 30 2026",
+      "startDate": "2026-08-24",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W36",
+      "label": "Aug 31 – Sep 6 2026",
+      "startDate": "2026-08-31",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W37",
+      "label": "Sep 7 – 13 2026",
+      "startDate": "2026-09-07",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W38",
+      "label": "Sep 14 – 20 2026",
+      "startDate": "2026-09-14",
+      "coverageWarning": null
+    },
+    {
+      "id": "2026-W39",
+      "label": "Sep 21 – 27 2026",
+      "startDate": "2026-09-21",
+      "coverageWarning": null
+    }
+  ]
 }

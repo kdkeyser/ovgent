@@ -2,19 +2,13 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.shadow)
-    application
 }
 
 kotlin {
-    jvmToolchain(24)
-}
-
-application {
-    mainClass.set("be.delijn.verkenner.MainKt")
+    jvmToolchain(21)
 }
 
 dependencies {
-    implementation(libs.graphhopper.core)
     implementation(libs.h3)
     implementation(libs.commons.csv)
     implementation(libs.kotlinx.serialization.json)
@@ -26,7 +20,9 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.named<JavaExec>("run") {
+tasks.register<JavaExec>("run") {
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("be.delijn.verkenner.MainKt")
     workingDir = rootProject.projectDir
 }
 
@@ -34,4 +30,7 @@ tasks.shadowJar {
     archiveBaseName.set("pipeline")
     archiveClassifier.set("")
     mergeServiceFiles()
+    manifest {
+        attributes["Main-Class"] = "be.delijn.verkenner.MainKt"
+    }
 }
